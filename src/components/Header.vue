@@ -1,7 +1,7 @@
 <template>
   <header class="app-header">
     <div class="header-left">
-      <button class="sidebar-btn" aria-label="開啟側邊欄">
+      <button class="sidebar-btn" aria-label="開啟側邊欄" @click="$emit('toggle-sidebar')">
         <span class="material-symbols-outlined">menu</span>
       </button>
       <span class="app-logo">MyLogo</span>
@@ -25,8 +25,12 @@
   justify-content: space-between;
   padding: 0 2rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-  position: relative;
-  z-index: 10;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
 }
 .header-left {
   display: flex;
