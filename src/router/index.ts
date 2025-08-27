@@ -3,27 +3,25 @@ import Home from '@/views/Home.vue'
 import ArticleList from '@/components/ArticleList.vue'
 import KeywordSetting from '@/components/KeywordSetting.vue'
 
-const routes = [
-  {
-    path: '/',
-    name: 'Home',
-    component: Home
-  },
-  {
-    path: '/articles',
-    name: 'Articles',
-    component: ArticleList
-  },
-  {
-    path: '/keywords',
-    name: 'Keywords',
-    component: KeywordSetting
-  }
-]
-
 const router = createRouter({
-  history: createWebHistory(),
-  routes
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    {
+      path: '/',
+      name: 'home',
+      component: Home
+    },
+    {
+      path: '/articles',
+      name: 'articles',
+      component: ArticleList
+    },
+    {
+      path: '/keywords',
+      name: 'keywords',
+      component: KeywordSetting
+    }
+  ]
 })
 
 export default router

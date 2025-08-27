@@ -1,94 +1,104 @@
 <template>
-  <transition name="sidebar-slide">
-    <aside v-if="open" class="custom-sidebar">
-      <nav class="sidebar-menu">
-        <router-link to="/" class="sidebar-item" :class="{active: currentPage==='Home'}" @click="handleClose">首頁</router-link>
-        <router-link to="/articles" class="sidebar-item" :class="{active: currentPage==='Articles'}" @click="handleClose">文章列表</router-link>
-        <router-link to="/keywords" class="sidebar-item" :class="{active: currentPage==='Keywords'}" @click="handleClose">關鍵字設定</router-link>
+  <div v-if="open" class="sidebar-overlay" @click="$emit('close')">
+    <div class="sidebar" @click.stop>
+      <nav class="sidebar-nav">
+        <button
+          class="nav-item"
+          :class="{ active: currentPage === 'home' }"
+          @click="$emit('navigate', 'home')"
+        >
+          <span class="material-symbols-outlined">home</span>
+          首頁
+        </button>
+        <button
+          class="nav-item"
+          :class="{ active: currentPage === 'articles' }"
+          @click="$emit('navigate', 'articles')"
+        >
+          <span class="material-symbols-outlined">article</span>
+          文章列表
+        </button>
+        <button
+          class="nav-item"
+          :class="{ active: currentPage === 'keywords' }"
+          @click="$emit('navigate', 'keywords')"
+        >
+          <span class="material-symbols-outlined">settings</span>
+          關鍵字設定
+        </button>
       </nav>
-    </aside>
-  </transition>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-const props = defineProps({
-  open: Boolean,
-  currentPage: String
-})
-const emit = defineEmits(['close'])
+defineProps<{
+  open: boolean
+  currentPage: string
+}>()
 
-function handleClose() {
-  emit('close')
-}
+defineEmits<{
+  close: []
+  navigate: [page: string]
+}>()
 </script>
 
 <style scoped>
-.custom-sidebar {
+.sidebar-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 240px;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.sidebar {
+  width: 280px;
   height: 100vh;
-  background: #f8fafc;
-  box-shadow: 2px 0 16px rgba(0,0,0,0.10);
-  z-index: 1001;
+  background: white;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  transform: translateX(0);
+  transition: transform 0.3s ease;
+}
+
+.sidebar-nav {
+  padding-top: 80px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.nav-item {
+  width: 100%;
+  padding: 16px 24px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
   display: flex;
-  flex-direction: column;
-  padding-top: 69px;
-  transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  color: #374151;
+  transition: all 0.2s ease;
 }
 
-.sidebar-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 1.5rem 0.5rem;
-}
-
-.sidebar-item {
-  padding: 0.9rem 1.2rem;
-  border-radius: 6px;
-  color: #222;
-  text-decoration: none;
-  font-size: 1.08rem;
-  transition: background 0.18s;
-  display: block;
-}
-
-.sidebar-item:hover {
-  background: #e3eaf3;
+.nav-item:hover {
+  background-color: #f3f4f6;
   color: #1976d2;
 }
 
-.sidebar-item.active, .sidebar-item.router-link-active {
-  background: #dbeafe;
+.nav-item.active {
+  background-color: #e3f2fd;
   color: #1976d2;
-  font-weight: bold;
+  border-right: 3px solid #1976d2;
 }
 
-/* Sidebar 動畫 */
-.sidebar-slide-enter-from {
-  transform: translateX(-100%);
-}
-.sidebar-slide-enter-to {
-  transform: translateX(0);
-}
-.sidebar-slide-leave-from {
-  transform: translateX(0);
-}
-.sidebar-slide-leave-to {
-  transform: translateX(-100%);
-}
-.sidebar-slide-enter-active,
-.sidebar-slide-leave-active {
-  transition: transform 0.25s cubic-bezier(.4,0,.2,1);
-}
-
-@media (max-width: 600px) {
-  .custom-sidebar {
-    width: 80vw;
-    min-width: 160px;
-    padding-top: 56px;
-  }
+.nav-item .material-symbols-outlined {
+  font-size: 20px;
 }
 </style>

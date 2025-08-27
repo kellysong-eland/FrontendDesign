@@ -174,112 +174,16 @@
       </div>
     </div>
 
-    <!-- 編輯/新增主題 Modal -->
-    <div v-if="showEditModal" class="modal-overlay" @click.self="cancelEdit">
-      <div class="modal-card" @click.stop>
-        <div class="modal-header">
-          <h3 class="modal-title">{{ editingTopicOriginalName ? '編輯主題' : '新增主題' }}</h3>
-        </div>
-        <div class="modal-body" @click.stop>
-          <div class="form-group">
-            <label class="form-label">主題名稱</label>
-            <div class="name-color-group">
-              <input v-model="editingTopicDraft.name" type="text" class="form-control name-input"
-                     :class="{'is-invalid': !canSaveEdit && editingTopicDraft.name.trim()}"
-                     placeholder="輸入主題名稱" />
-              <div class="color-picker-wrapper">
-                <input v-model="editingTopicDraft.color" type="color" class="color-picker" />
-                <span class="color-preview" :style="{ backgroundColor: editingTopicDraft.color }"></span>
-              </div>
-            </div>
-            <div v-if="!canSaveEdit && editingTopicDraft.name.trim()" class="error-message">
-              主題名稱已存在
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">設定類型</label>
-            <div class="setting-type-options">
-              <div class="setting-type-item"
-                   :class="{ active: editingTopicDraft.settingType === 'ai' }"
-                   @click.stop="editingTopicDraft.settingType = 'ai'">
-                <input type="radio" id="setting-ai" value="ai" v-model="editingTopicDraft.settingType" style="display: none;" />
-                <span class="material-symbols-outlined">smart_toy</span>
-                <span class="setting-text">AI設定</span>
-              </div>
-              <div class="setting-type-item"
-                   :class="{ active: editingTopicDraft.settingType === 'general' }"
-                   @click.stop="editingTopicDraft.settingType = 'general'">
-                <input type="radio" id="setting-general" value="general" v-model="editingTopicDraft.settingType" style="display: none;" />
-                <span class="material-symbols-outlined">settings</span>
-                <span class="setting-text">一般設定</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- AI設定專用欄位 -->
-          <div v-if="editingTopicDraft.settingType === 'ai'" class="ai-settings-section">
-            <div class="form-group">
-              <label class="form-label">情境說明</label>
-              <div class="scenario-input-group">
-                <textarea v-model="editingTopicDraft.scenario" rows="3" class="form-control"
-                         placeholder="請描述您想要分析的情境或場景"
-                         @click.stop></textarea>
-                <button type="button" class="btn btn-ai-generate" @click.stop="generateAIContent" :disabled="isGenerating">
-                  <span class="material-symbols-outlined">auto_awesome</span>
-                  <span v-if="isGenerating">生成中...</span>
-                  <span v-else>AI生成</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- AI生成後的欄位 -->
-            <div v-if="showGeneratedFields" class="generated-fields" @click.stop>
-              <div class="form-group">
-                <label class="form-label">關鍵字</label>
-                <input v-model="editingTopicDraft.keywords" type="text" class="form-control"
-                       placeholder="AI生成的關鍵字" readonly @click.stop />
-              </div>
-              <div class="form-group">
-                <label class="form-label">關鍵字說明</label>
-                <textarea v-model="editingTopicDraft.keywordDesc" rows="3" class="form-control"
-                         placeholder="AI生成的關鍵字說明" readonly @click.stop></textarea>
-              </div>
-            </div>
-          </div>
-
-          <!-- 一般設定專用欄位 -->
-          <div v-if="editingTopicDraft.settingType === 'general'" class="general-settings-section">
-            <div class="form-group">
-              <label class="form-label">關鍵字</label>
-              <input v-model="editingTopicDraft.keywords" type="text" class="form-control"
-                     placeholder="請輸入關鍵字，多個關鍵字請用逗號分隔" @click.stop />
-            </div>
-          </div>
-
-          <!-- 可觀看成員選擇 -->
-          <div class="form-group">
-            <label class="form-label">可觀看成員</label>
-            <div class="member-select-wrapper">
-              <select v-model="editingTopicDraft.viewableMember" class="form-select member-select" @click.stop>
-                <option value="">請選擇成員</option>
-                <option v-for="member in membersList" :key="member.id" :value="member.id">
-                  {{ member.name }} ({{ member.email }})
-                </option>
-              </select>
-              <span class="select-arrow material-symbols-outlined">expand_more</span>
-            </div>
-            <small class="form-text text-muted">選擇可以查看此主題的成員</small>
-          </div>
-        </div>
-        <div class="modal-footer" @click.stop>
-          <button type="button" class="btn btn-secondary" @click="cancelEdit">取消</button>
-          <button type="button" class="btn btn-primary" @click="saveEdit" :disabled="!canSaveEdit">
-            {{ editingTopicOriginalName ? '更新' : '新增' }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <!-- Topic Modal -->
+    <TopicModal
+      :visible="showEditModal"
+      :isEdit="!!editingTopicOriginalName"
+      :existingTopics="topics"
+      :initialData="editingTopicDraft"
+      :membersList="membersList"
+      @close="cancelEdit"
+      @save="handleTopicSave"
+    />
 
     <!-- 刪除確認 Modal -->
     <div v-if="showDeleteConfirm" class="modal-overlay" @click.self="cancelDelete">
@@ -302,8 +206,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useTopics, type Topic } from '@/composables/useTopics'
+import TopicModal from './TopicModal.vue'
 
-const { topics, addTopic, updateTopic, deleteTopic, moveTopic } = useTopics()
+const { topics, addTopic, updateTopic, deleteTopic, reorderTopics } = useTopics()
 
 // 成員列表數據
 const membersList = ref([
@@ -380,11 +285,6 @@ function onTooltipLeave() { hoveredTopic.value = null }
 const showEditModal = ref(false)
 const editingTopicOriginalName = ref<string>('')
 const editingTopicDraft = ref<Topic>({ name: '', desc: '' })
-const canSaveEdit = computed(() => {
-  const draft = editingTopicDraft.value
-  if (!draft.name.trim()) return false
-  return !topics.value.some(t => t.name === draft.name && t.name !== editingTopicOriginalName.value)
-})
 function startEdit(topic: Topic) {
   editingTopicOriginalName.value = topic.name
   editingTopicDraft.value = { ...topic }
@@ -396,31 +296,26 @@ function startCreate() {
     name: '',
     desc: '',
     color: '#2196F3',
-    settingType: 'ai', // 修正為AI設定
+    settingType: 'ai',
     viewableMember: ''
   }
-  // 重置AI生成相關狀態
-  showGeneratedFields.value = false
-  isGenerating.value = false
   showEditModal.value = true
 }
 function cancelEdit() {
   showEditModal.value = false
 }
-function saveEdit() {
-  if (!canSaveEdit.value) return
-  const draft = { ...editingTopicDraft.value }
+function handleTopicSave(topicData: Topic) {
   if (!editingTopicOriginalName.value) {
     try {
-      addTopic(draft)
-      selectedTopic.value = draft.name
-      hoveredTopic.value = draft
+      addTopic(topicData)
+      selectedTopic.value = topicData.name
+      hoveredTopic.value = topicData
     } catch (e) { return }
   } else {
     try {
-      updateTopic(editingTopicOriginalName.value, draft)
-      if (selectedTopic.value === editingTopicOriginalName.value) selectedTopic.value = draft.name
-      if (hoveredTopic.value && hoveredTopic.value.name === editingTopicOriginalName.value) hoveredTopic.value = draft
+      updateTopic(editingTopicOriginalName.value, topicData)
+      if (selectedTopic.value === editingTopicOriginalName.value) selectedTopic.value = topicData.name
+      if (hoveredTopic.value && hoveredTopic.value.name === editingTopicOriginalName.value) hoveredTopic.value = topicData
     } catch (e) { return }
   }
   showEditModal.value = false
@@ -461,7 +356,7 @@ function onDragOver(_index: number) {
 }
 function onDrop(index: number) {
   if (dragFrom.value !== null && dragFrom.value !== index) {
-    moveTopic(dragFrom.value, index)
+    reorderTopics(dragFrom.value, index)
   }
   dragFrom.value = null
   // 延遲重啟提示框功能，避免立即顯示
@@ -477,64 +372,7 @@ function onDragEnd() {
   }, 100)
 }
 
-// AI生成相關狀態
-const isGenerating = ref(false)
-const showGeneratedFields = ref(false)
-
-// AI生成功能
-async function generateAIContent() {
-  if (!editingTopicDraft.value.scenario?.trim()) {
-    alert('請先輸入情境說明')
-    return
-  }
-
-  isGenerating.value = true
-
-  try {
-    // 模擬AI生成過程（2秒延遲）
-    await new Promise(resolve => setTimeout(resolve, 2000))
-
-    // 模擬AI生成的內容
-    const scenario = editingTopicDraft.value.scenario
-    editingTopicDraft.value.keywords = generateMockKeywords(scenario)
-    editingTopicDraft.value.keywordDesc = generateMockKeywordDesc(scenario)
-
-    showGeneratedFields.value = true
-  } catch (error) {
-    console.error('AI生成失敗:', error)
-    alert('AI生成失敗，請稍後再試')
-  } finally {
-    isGenerating.value = false
-  }
-}
-
-// 模擬關鍵字生成
-function generateMockKeywords(scenario: string): string {
-  const keywords = [
-    '人工智慧', '機器學習', '深度學習', '自然語言處理',
-    '數據分析', '智能化', '自動化', '預測模型',
-    '演算法', '神經網路', '大數據', '雲端運算'
-  ]
-
-  // 根據情境內容選擇相關關鍵字
-  let selectedKeywords = keywords.slice(0, 4)
-
-  if (scenario.includes('醫療') || scenario.includes('健康')) {
-    selectedKeywords = ['醫療AI', '診斷系統', '健康監測', '精準醫療']
-  } else if (scenario.includes('財經') || scenario.includes('金融')) {
-    selectedKeywords = ['金融科技', '風險評估', '智能投顧', '區塊鏈']
-  } else if (scenario.includes('教育') || scenario.includes('學習')) {
-    selectedKeywords = ['教育科技', '個人化學習', '智慧教室', '學習分析']
-  }
-
-  return selectedKeywords.join(', ')
-}
-
-// 模擬關鍵字說明生成
-function generateMockKeywordDesc(scenario: string): string {
-  return `基於情境「${scenario}」，AI系統分析並生成了相關的關鍵字組合。這些關鍵字涵蓋了該領域的核心概念和技術要點，有助於精準捕捉相關文章和討論內容。系統會持續學習和優化關鍵字的準確性和相關性。`
-}
-
+// 來源選擇處理
 function toggleSource(value: string) {
   const index = selectedSources.value.indexOf(value)
   if (index > -1) {
@@ -1167,135 +1005,6 @@ function toggleAllSources() {
 
 .setting-type-item.active .setting-text {
   color: white;
-}
-
-/* AI設定區域樣式 */
-.ai-settings-section {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-.scenario-input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.btn-ai-generate {
-  align-self: flex-end;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
-}
-
-.btn-ai-generate:hover:not(:disabled) {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
-}
-
-.btn-ai-generate:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.btn-ai-generate .material-symbols-outlined {
-  font-size: 18px;
-}
-
-.generated-fields {
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  border-radius: 8px;
-  padding: 20px;
-  margin-top: 16px;
-  animation: slideIn 0.3s ease;
-}
-
-.generated-fields .form-control {
-  background: white;
-  border-color: #bae6fd;
-}
-
-.generated-fields .form-control:focus {
-  border-color: #0ea5e9;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-}
-
-.generated-fields .form-label {
-  color: #0369a1;
-  font-weight: 600;
-}
-
-/* 可觀看成員下拉選單樣式 */
-.member-select-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.form-select {
-  padding: 10px 16px;
-  padding-right: 40px; /* 為箭頭留出空間 */
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-  background: white;
-  width: 100%;
-  appearance: none; /* 隱藏預設箭頭 */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-}
-
-.form-select:focus {
-  outline: none;
-  border-color: #1976d2;
-  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
-}
-
-.form-select option {
-  padding: 8px 12px;
-  background: white;
-  color: #374151;
-}
-
-.form-select option:checked {
-  background: #1976d2;
-  color: white;
-}
-
-.select-arrow {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #6b7280;
-  font-size: 18px;
-  pointer-events: none; /* 讓點擊穿透到select元素 */
-  transition: all 0.2s ease;
-}
-
-.member-select-wrapper:hover .select-arrow {
-  color: #1976d2;
-}
-
-.form-select:focus ~ .select-arrow {
-  color: #1976d2;
-  transform: translateY(-50%) rotate(180deg);
 }
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />

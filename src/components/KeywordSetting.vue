@@ -1,237 +1,217 @@
 <template>
-  <div class="keyword-setting-page">
+  <div class="container-fluid bg-light min-vh-100">
     <!-- Page Header -->
-    <div class="page-header">
+    <div class="py-4 bg-gradient border-bottom">
       <div class="container">
-        <div class="header-content">
-          <h1 class="page-title">關鍵字設定</h1>
-          <p class="page-subtitle">管理主題分類與關鍵字組合，建立專屬的內容分析規則</p>
+        <div class="text-center">
+          <h1 class="display-4 mb-2 fw-medium fs-1">關鍵字設定</h1>
+          <p class="lead text-muted">管理主題分類與關鍵字組合，建立專屬的內容分析規則</p>
         </div>
       </div>
     </div>
 
     <!-- Main Content -->
-    <div class="main-content">
+    <div class="py-5">
       <div class="container">
         <!-- 主題管理區塊 -->
-        <div class="management-section">
-          <div class="section-card">
-            <div class="card-header">
-              <div class="header-left">
-                <h2 class="card-title">主題管理</h2>
-                <p class="card-subtitle">設定主題分類規則、關鍵詞組合與團隊權限</p>
+        <div class="card shadow-lg">
+          <div class="card-header bg-white border-bottom-0 py-4">
+            <div class="d-flex justify-content-between align-items-center me-2">
+              <div>
+<!--                <h2 class="h4 mb-2">主題管理</h2>-->
+<!--                <p class="text-muted mb-0">設定主題分類規則、關鍵詞組合與團隊權限</p>-->
               </div>
-              <div class="header-actions">
-                <span v-if="saved" class="status-badge locked">
-                  <span class="material-symbols-outlined">lock</span>
-                  已鎖定
-                </span>
-                <button v-if="saved" class="btn btn-outline-primary" @click="unlock">
-                  <span class="material-symbols-outlined me-1">edit</span>
-                  編輯模式
-                </button>
-                <button class="btn btn-primary" @click="openAddTopicModal" :disabled="saved">
-                  <span class="material-symbols-outlined me-1">add</span>
+              <div class="d-flex gap-3 align-items-center">
+<!--                <span v-if="isEditing" class="badge bg-success d-flex align-items-center gap-1">-->
+<!--                  <span class="material-symbols-outlined">lock_open</span>-->
+<!--                  編輯中-->
+<!--                </span>-->
+<!--                <span v-else class="badge bg-secondary d-flex align-items-center gap-1">-->
+<!--                  <span class="material-symbols-outlined">lock</span>-->
+<!--                  已鎖定-->
+<!--                </span>-->
+                <button class="btn btn-primary d-flex align-items-center gap-2"
+                        @click="openAddTopicModal"
+                        :disabled="isEditing">
+                  <span class="material-symbols-outlined">add</span>
                   新增主題
                 </button>
-                <button v-if="rows.length && !saved" class="btn btn-success" @click="saveAll" :disabled="!canSave">
-                  <span class="material-symbols-outlined me-1">save</span>
-                  儲存全部
+                <button class="btn btn-primary d-flex align-items-center gap-2" @click="toggleEditMode">
+                  <span class="material-symbols-outlined">
+                    {{ isEditing ? 'check' : 'edit' }}
+                  </span>
+                  {{ isEditing ? '儲存' : '編輯主題' }}
                 </button>
               </div>
             </div>
+          </div>
 
-            <div class="table-container">
-              <div class="table-responsive">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th width="3%"></th>
-                      <th width="16%">主題名稱</th>
-                      <th width="18%">描述</th>
-                      <th width="10%">顏色標籤</th>
-                      <th width="33%">關鍵詞組</th>
-                      <th width="16%">可觀看成員</th>
-                      <th width="4%" class="text-center">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(row,idx) in rows" :key="row.id"
-                        :class="{'row-dragging': dragOverIndex===idx, 'row-locked': saved}"
-                        :draggable="!saved"
-                        @dragstart="onRowDragStart(idx)"
-                        @dragover.prevent="onRowDragOver(idx)"
-                        @drop.prevent="onRowDrop(idx)"
-                        @dragend="onRowDragEnd">
+          <div class="card-body p-4">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width: 3%"></th>
+                    <th style="width: 20%">主題名稱</th>
+                    <th style="width: 12%">顏色標籤</th>
+                    <th style="width: 40%">關鍵詞組</th>
+                    <th style="width: 20%">可觀看成員</th>
+                    <th style="width: 5%" class="text-center">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row,idx) in rows"
+                      :key="row.id"
+                      :class="{'opacity-50': dragOverIndex===idx, 'bg-light': !isEditing}"
+                      :draggable="isEditing"
+                      @dragstart="onRowDragStart(idx)"
+                      @dragover.prevent="onRowDragOver(idx)"
+                      @drop.prevent="onRowDrop"
+                      @dragend="onRowDragEnd">
 
-                      <!-- Drag Handle -->
-                      <td class="drag-cell">
-                        <span class="material-symbols-outlined drag-handle" :class="{disabled: saved}">
-                          drag_indicator
-                        </span>
-                      </td>
+                    <!-- Drag Handle -->
+                    <td>
+                      <span class="material-symbols-outlined text-muted"
+                            :class="{'opacity-50': !isEditing}">
+                        drag_indicator
+                      </span>
+                    </td>
 
-                      <!-- 主題名稱 -->
-                      <td class="topic-cell">
-                        <div class="input-wrapper">
-                          <input v-model.trim="row.topic"
+                    <!-- 主題名稱 -->
+                    <td>
+                      <input v-model.trim="row.topic"
+                             type="text"
+                             class="form-control form-control-sm"
+                             :class="{'is-invalid': row.topicError}"
+                             placeholder="輸入主題名稱"
+                             :disabled="!isEditing"
+                             @input="onTopicInput(row)"
+                             @blur="onTopicBlur(row)" />
+                      <div class="invalid-feedback" v-if="row.topicError">
+                        {{ row.topicError }}
+                      </div>
+                    </td>
+
+                    <!-- 顏色標籤 -->
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        <input type="color"
+                               v-model="row.color"
+                               class="form-control form-control-color"
+                               title="選擇顏色"
+                               :disabled="!isEditing" />
+                        <div class="rounded-circle"
+                             style="width: 24px; height: 24px;"
+                             :style="{ backgroundColor: row.color }"></div>
+                      </div>
+                    </td>
+
+                    <!-- 關鍵詞組 -->
+                    <td>
+                      <div class="position-relative">
+                        <textarea v-model="row.keywords"
+                                 rows="2"
+                                 class="form-control form-control-sm"
+                                 placeholder="以逗號或空白分隔關鍵詞"
+                                 :disabled="!isEditing"
+                                 @input="onKeywordsInput(row)"
+                                 @blur="onKeywordsBlur(row)"
+                                 @focus="onKeywordsInput(row)"></textarea>
+                        <small class="text-muted">自動完成，點選建議可插入</small>
+                        <div v-if="row.showSuggest && row.filteredSuggestions.length"
+                             class="dropdown-menu show w-100">
+                          <button v-for="s in row.filteredSuggestions"
+                                  :key="s"
+                                  class="dropdown-item"
+                                  @mousedown.prevent="applySuggestion(row, s)">
+                            {{ s }}
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- 可觀看成員 -->
+                    <td>
+                      <div class="d-flex flex-column gap-2">
+                        <div class="d-flex flex-wrap gap-1">
+                          <span v-for="(m,i) in row.members"
+                                :key="i"
+                                class="badge bg-primary">
+                            {{ m }}
+                            <button type="button"
+                                    class="btn-close btn-close-white ms-1"
+                                    style="font-size: 0.6rem;"
+                                    @click="removeMember(row,i)"
+                                    :disabled="!isEditing"></button>
+                          </span>
+                          <span v-if="!row.members.length" class="text-muted small">
+                            尚未設定成員
+                          </span>
+                        </div>
+                        <div v-if="isEditing" class="input-group input-group-sm">
+                          <input v-model.trim="row.memberInput"
                                  type="text"
-                                 class="form-input"
-                                 placeholder="輸入主題名稱"
-                                 :disabled="saved"
-                                 :class="{'error': !!row.topicError}"
-                                 @input="onTopicInput(row)"
-                                 @blur="onTopicBlur(row)" />
-                          <div v-if="row.topicError" class="error-message">{{ row.topicError }}</div>
+                                 class="form-control"
+                                 placeholder="輸入成員帳號"
+                                 @keyup.enter.prevent="addMember(row)" />
+                          <button class="btn btn-outline-primary"
+                                  type="button"
+                                  @click="addMember(row)">
+                            加入
+                          </button>
                         </div>
-                      </td>
+                      </div>
+                    </td>
 
-                      <!-- 描述 -->
-                      <td class="desc-cell">
-                        <textarea v-model.trim="row.desc"
-                                  rows="2"
-                                  class="form-textarea"
-                                  placeholder="輸入主題描述"
-                                  :disabled="saved"
-                                  @blur="onDescBlur(row)"></textarea>
-                      </td>
+                    <!-- 操作 -->
+                    <td class="text-center">
+                      <button class="btn btn-sm btn-outline-danger"
+                              @click="removeRowAndTopic(row)"
+                              :hidden="!isEditing"
+                              title="刪除此主題">
+                        <span class="material-symbols-outlined">delete</span>
+                      </button>
+                    </td>
+                  </tr>
 
-                      <!-- 顏色標籤 -->
-                      <td class="color-cell">
-                        <div class="color-picker-wrapper">
-                          <input type="color"
-                                 v-model="row.color"
-                                 class="color-input"
-                                 title="選擇顏色"
-                                 :disabled="saved" />
-                          <div class="color-preview" :style="{ backgroundColor: row.color }"></div>
-                        </div>
-                      </td>
-
-                      <!-- 關鍵詞組 -->
-                      <td class="keywords-cell">
-                        <div class="keywords-wrapper">
-                          <textarea v-model="row.keywords"
-                                    rows="2"
-                                    class="form-textarea"
-                                    placeholder="以逗號或空白分隔關鍵詞"
-                                    :disabled="saved"
-                                    @input="onKeywordsInput(row)"
-                                    @blur="onKeywordsBlur(row)"
-                                    @focus="onKeywordsInput(row)"></textarea>
-                          <div class="keywords-hint">自動完成，點選建議可插入</div>
-                          <div v-if="row.showSuggest && row.filteredSuggestions.length" class="suggestions-list">
-                            <div v-for="s in row.filteredSuggestions"
-                                 :key="s"
-                                 @mousedown.prevent="applySuggestion(row, s)"
-                                 class="suggestion-item">{{ s }}</div>
-                          </div>
-                        </div>
-                      </td>
-
-                      <!-- 可觀看成員 -->
-                      <td class="members-cell">
-                        <div class="members-wrapper">
-                          <div class="member-tags">
-                            <span v-for="(m,i) in row.members" :key="i" class="member-tag">
-                              {{ m }}
-                              <button type="button"
-                                      class="remove-btn"
-                                      @click="removeMember(row,i)"
-                                      :disabled="saved">&times;</button>
-                            </span>
-                            <span v-if="!row.members.length" class="empty-state">尚未設定成員</span>
-                          </div>
-                          <div class="member-input" v-if="!saved">
-                            <input v-model.trim="row.memberInput"
-                                   type="text"
-                                   class="form-input"
-                                   placeholder="輸入成員帳號"
-                                   @keyup.enter.prevent="addMember(row)" />
-                            <button class="add-btn" type="button" @click="addMember(row)">加入</button>
-                          </div>
-                        </div>
-                      </td>
-
-                      <!-- 操作 -->
-                      <td class="action-cell">
-                        <button class="action-btn delete-btn"
-                                @click="removeRowAndTopic(row)"
-                                :disabled="saved"
-                                title="刪除此主題">
-                          <span class="material-symbols-outlined">delete</span>
-                        </button>
-                      </td>
-                    </tr>
-
-                    <tr v-if="!rows.length" class="empty-row">
-                      <td colspan="7" class="empty-state-cell">
-                        <div class="empty-illustration">
-                          <span class="material-symbols-outlined">topic</span>
-                        </div>
-                        <div class="empty-text">
-                          <h3>尚無主題資料</h3>
-                          <p>點選「新增主題」開始建立您的第一個主題分類</p>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                  <tr v-if="!rows.length">
+                    <td colspan="6" class="text-center p-5">
+                      <div class="text-muted">
+                        <span class="material-symbols-outlined" style="font-size: 2rem;">topic</span>
+                        <h5 class="mt-3">尚無主題資料</h5>
+                        <p class="mb-0">點選「新增主題」開始建立您的第一個主題分類</p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 新增主題 Modal -->
-    <div v-if="showAddModal" class="modal-overlay" @click.self="closeAddTopicModal">
-      <div class="modal-card">
-        <div class="modal-header">
-          <h3 class="modal-title">新增主題</h3>
-          <button type="button" class="close-btn" @click="closeAddTopicModal">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label">主題名稱 <span class="required">*</span></label>
-            <input v-model="newTopicName"
-                   type="text"
-                   class="form-control"
-                   :class="{'error': !!newTopicError}"
-                   @input="validateNewTopic" />
-            <div v-if="newTopicError" class="error-message">{{ newTopicError }}</div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">描述</label>
-            <textarea v-model="newTopicDesc"
-                      rows="3"
-                      class="form-control"
-                      placeholder="輸入主題描述（可選）"></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" @click="closeAddTopicModal">取消</button>
-          <button type="button"
-                  class="btn btn-primary"
-                  @click="confirmAddTopic"
-                  :disabled="!!newTopicError || !newTopicName.trim()">新增主題</button>
-        </div>
-      </div>
-    </div>
+    <!-- Topic Modal -->
+    <TopicModal
+      :visible="showAddModal"
+      :isEdit="false"
+      :existingTopics="topics"
+      :membersList="membersList"
+      @close="closeAddTopicModal"
+      @save="handleTopicSave"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { useTopics, type Topic } from '@/composables/useTopics'
+import TopicModal from './TopicModal.vue'
 
 interface KeywordRow {
   id: number
   topic: string
   originalName: string
-  desc: string
   topicError?: string
   color: string
   keywords: string
@@ -243,457 +223,406 @@ interface KeywordRow {
 
 const { topics, addTopic, updateTopic, deleteTopic } = useTopics()
 
-// 初始表格行：根據現有 topics 建立（保留示例 default 設定）
+// 成員列表數據
+const membersList = ref([
+  { id: 1, name: '張小明', email: 'ming.zhang@example.com' },
+  { id: 2, name: '李小華', email: 'hua.li@example.com' },
+  { id: 3, name: '王小美', email: 'mei.wang@example.com' },
+  { id: 4, name: '陳小剛', email: 'gang.chen@example.com' },
+  { id: 5, name: '林小雅', email: 'ya.lin@example.com' },
+  { id: 6, name: '黃小強', email: 'qiang.huang@example.com' },
+  { id: 7, name: '劉小芳', email: 'fang.liu@example.com' },
+  { id: 8, name: '吳小龍', email: 'long.wu@example.com' }
+])
+
+// 初始表格行：根據現有 topics 建立
 const rows = reactive<KeywordRow[]>([])
 
 function ensureRowsFromTopics() {
   topics.value.forEach(t => {
     if (!rows.some(r => r.originalName === t.name)) {
-      rows.push({ id: nextId(), topic: t.name, originalName: t.name, desc: t.desc, color: randomColor(), keywords: '', members: [], memberInput: '', filteredSuggestions: [], showSuggest:false })
-    } else {
-      // 更新描述同步
-      const row = rows.find(r => r.originalName === t.name)!
-      row.desc = t.desc
+      const newRow: KeywordRow = {
+        id: Date.now() + Math.random(),
+        topic: t.name,
+        originalName: t.name,
+        color: t.color || '#2196F3',
+        keywords: t.keywords || '',
+        members: [],
+        memberInput: '',
+        showSuggest: false,
+        filteredSuggestions: []
+      }
+      rows.push(newRow)
     }
   })
-  for (let i = rows.length -1; i >=0; i--) {
-    if (!topics.value.some(t => t.name === rows[i].originalName)) rows.splice(i,1)
-  }
-  // 讓 rows 順序跟 topics 順序一致
-  rows.sort((a,b) => topics.value.findIndex(t=>t.name===a.originalName) - topics.value.findIndex(t=>t.name===b.originalName))
 }
+
+// 初始化時確保同步
 ensureRowsFromTopics()
 
-watch(() => topics.value.length, () => ensureRowsFromTopics())
+// 監聽 topics 變化
+watch(topics, () => {
+  ensureRowsFromTopics()
+}, { deep: true })
 
-const saved = ref(true)
+// 編輯狀態管理
+const isEditing = ref(false)
 
-function nextId() { return rows.length ? Math.max(...rows.map(r=>r.id)) + 1 : 1 }
-function randomColor() { return '#'+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0') }
-
-/* 主題新增 Modal */
+// 新增主題 Modal
 const showAddModal = ref(false)
-const newTopicName = ref('')
-const newTopicDesc = ref('')
-const newTopicError = ref('')
 
 function openAddTopicModal() {
-  newTopicName.value = ''
-  newTopicDesc.value = ''
-  newTopicError.value = ''
   showAddModal.value = true
 }
-function closeAddTopicModal() { showAddModal.value = false }
 
-function validateNewTopic() {
-  const name = newTopicName.value.trim()
-  if (!name) { newTopicError.value = '主題名稱不可為空'; return }
-  if (topics.value.some(t => t.name === name)) { newTopicError.value = '主題已存在'; return }
-  newTopicError.value = ''
+function closeAddTopicModal() {
+  showAddModal.value = false
 }
-function confirmAddTopic() {
-  validateNewTopic()
-  if (newTopicError.value) return
-  const topic: Topic = { name: newTopicName.value.trim(), desc: newTopicDesc.value.trim() }
+
+function handleTopicSave(topic: Topic) {
   try {
     addTopic(topic)
-    rows.push({ id: nextId(), topic: topic.name, originalName: topic.name, desc: topic.desc, color: randomColor(), keywords: '', members: [], memberInput: '', filteredSuggestions: [], showSuggest:false })
+    // 同時在表格中新增對應的行
+    const newRow: KeywordRow = {
+      id: Date.now() + Math.random(),
+      topic: topic.name,
+      originalName: topic.name,
+      color: topic.color || '#2196F3',
+      keywords: topic.keywords || '',
+      members: [],
+      memberInput: '',
+      showSuggest: false,
+      filteredSuggestions: []
+    }
+    rows.push(newRow)
     showAddModal.value = false
-  } catch {}
+  } catch (e) {
+    // 處理錯誤（主題名稱重複等）
+    console.error('新增主題失敗:', e)
+  }
 }
 
-/* 列操作 */
-function removeRowAndTopic(row: KeywordRow) {
-  const idx = rows.findIndex(r => r.id === row.id)
-  if (idx !== -1) rows.splice(idx,1)
-  deleteTopic(row.originalName)
+// 編輯模式切換
+function toggleEditMode() {
+  isEditing.value = !isEditing.value
+
+  // 當結束編輯時，自動保存當前的更改
+  if (!isEditing.value) {
+    autoSaveChanges()
+  }
 }
 
-/* 成員 */
-function addMember(row: KeywordRow) {
-  if (!row.memberInput) return
-  const val = row.memberInput.trim()
-  if (!val) return
-  if (!row.members.includes(val)) row.members.push(val)
-  row.memberInput = ''
+// 自動保存功能
+function autoSaveChanges() {
+  rows.forEach(row => {
+    if (row.originalName !== row.topic || needsUpdate(row)) {
+      const updatedTopic: Topic = {
+        name: row.topic,
+        color: row.color,
+        keywords: row.keywords,
+        desc: '', // 添加必需的desc屬性
+        members: [] // 添加必需的members屬性
+      }
+      try {
+        if (row.originalName) {
+          updateTopic(row.originalName, updatedTopic)
+        } else {
+          addTopic(updatedTopic)
+        }
+        row.originalName = row.topic
+      } catch (e) {
+        console.error('自動保存失敗:', e)
+      }
+    }
+  })
 }
-function removeMember(row: KeywordRow, index: number) { row.members.splice(index,1) }
 
-/* 關鍵詞處理與自動完成 */
-const keywordSuggestions = ref<string[]>([
-  'AI','人工智慧','機器學習','深度學習','大數據','雲端','區塊鏈','投資','ETF','金融','利率','通膨','健康','旅遊','美食','電影','影視','足球','棒球','籃球','科技產業'
-])
+// 檢查是否需要更新
+function needsUpdate(row: KeywordRow): boolean {
+  const existingTopic = topics.value.find(t => t.name === row.originalName)
+  if (!existingTopic) return true
 
-function parseKeywords(input: string): string[] {
-  return input.split(/[\s,;，；,]+/).map(s=>s.trim()).filter(Boolean)
+  return existingTopic.color !== row.color ||
+         existingTopic.keywords !== row.keywords
 }
-function onKeywordsInput(row: KeywordRow) {
-  if (saved.value) return
-  const cursorToken = (row.keywords.match(/([^,;\s]+)$/)?.[1] || '').toLowerCase()
-  if (!cursorToken) {
-    row.filteredSuggestions = keywordSuggestions.value.slice(0,8)
-    row.showSuggest = true
+
+// 表格操作
+function onTopicInput(row: KeywordRow) {
+  validateTopicName(row)
+}
+
+function onTopicBlur(row: KeywordRow) {
+  validateTopicName(row)
+}
+
+function validateTopicName(row: KeywordRow) {
+  const name = row.topic.trim()
+  if (!name) {
+    row.topicError = '主題名稱不能為空'
     return
   }
-  row.filteredSuggestions = keywordSuggestions.value
-    .filter(k => k.toLowerCase().startsWith(cursorToken) && !parseKeywords(row.keywords).includes(k))
-    .slice(0,8)
-  row.showSuggest = !!row.filteredSuggestions.length
-}
-function applySuggestion(row: KeywordRow, suggestion: string) {
-  if (/(?:[^,;\s]+)$/.test(row.keywords)) {
-    row.keywords = row.keywords.replace(/([^,;\s]+)$/, suggestion)
-  } else {
-    row.keywords = row.keywords.trim()
-    row.keywords += (row.keywords ? ', ' : '') + suggestion
-  }
-  row.showSuggest = false
-  onKeywordsInput(row)
-}
-function onKeywordsBlur(row: KeywordRow) { setTimeout(()=> row.showSuggest = false, 150) }
 
-/* 主題 inline 編輯 */
-function onTopicInput(row: KeywordRow) {
-  if (saved.value) return
-  const name = row.topic.trim()
-  if (!name) { row.topicError = '不可為空'; return }
-  if (topics.value.some(t => t.name === name && t.name !== row.originalName)) { row.topicError = '主題重複'; return }
-  row.topicError = ''
+  // 檢查是否與其他行重複
+  const duplicate = rows.find(r => r !== row && r.topic.trim() === name)
+  if (duplicate) {
+    row.topicError = '主題名稱不能重複'
+    return
+  }
+
+  row.topicError = undefined
 }
-function onTopicBlur(row: KeywordRow) {
-  if (saved.value) return
-  onTopicInput(row)
-  if (row.topicError) { row.topic = row.originalName; row.topicError = ''; return }
-  if (row.topic !== row.originalName) {
-    const existing = topics.value.find(t => t.name === row.originalName)
-    if (existing) {
-      try {
-        updateTopic(row.originalName, { name: row.topic, desc: row.desc })
-        row.originalName = row.topic
-      } catch { row.topic = row.originalName }
+
+// 關鍵詞建議功能
+const keywordSuggestions = [
+  'AI', '人工智慧', '機器學習', '深度學習', 'ChatGPT', 'GPT',
+  '區塊鏈', '加密貨幣', '比特幣', '以太坊', 'NFT', 'DeFi',
+  '股市', '投資', '基金', '債券', '房地產', '通膨',
+  '健康', '醫療', '疫苗', '新冠', 'COVID', '運動',
+  '環保', '永續', '綠能', '電動車', '特斯拉', '氣候變遷'
+]
+
+function onKeywordsInput(row: KeywordRow) {
+  const input = row.keywords
+  if (!input) {
+    row.showSuggest = false
+    return
+  }
+
+  const words = input.split(/[,，;；\s]+/).map(s => s.trim()).filter(Boolean)
+  const lastWord = words[words.length - 1]
+
+  if (lastWord && lastWord.length >= 1) {
+    row.filteredSuggestions = keywordSuggestions.filter(s =>
+      s.toLowerCase().includes(lastWord.toLowerCase()) && !words.includes(s)
+    ).slice(0, 6)
+    row.showSuggest = row.filteredSuggestions.length > 0
+  } else {
+    row.showSuggest = false
+  }
+}
+
+function onKeywordsBlur(row: KeywordRow) {
+  setTimeout(() => {
+    row.showSuggest = false
+  }, 200)
+}
+
+function applySuggestion(row: KeywordRow, suggestion: string) {
+  const input = row.keywords.split(/[,，;；\s]+/).map(s => s.trim()).filter(Boolean)
+  input[input.length - 1] = suggestion
+  row.keywords = input.join(', ') + ', '
+  row.showSuggest = false
+}
+
+// 成員管理
+function addMember(row: KeywordRow) {
+  const member = row.memberInput?.trim()
+  if (member && !row.members.includes(member)) {
+    row.members.push(member)
+    row.memberInput = ''
+  }
+}
+
+function removeMember(row: KeywordRow, index: number) {
+  row.members.splice(index, 1)
+}
+
+// 刪除行和主題
+function removeRowAndTopic(row: KeywordRow) {
+  if (confirm(`確定要刪除主題「${row.topic}」嗎？`)) {
+    // 從 topics 中刪除
+    try {
+      deleteTopic(row.originalName)
+    } catch (e) {
+      console.error('刪除主題失敗:', e)
+    }
+
+    // 從表格中移除行
+    const index = rows.indexOf(row)
+    if (index !== -1) {
+      rows.splice(index, 1)
     }
   }
 }
-function onDescBlur(row: KeywordRow) {
-  if (saved.value) return
-  const existing = topics.value.find(t => t.name === row.originalName)
-  if (existing) updateTopic(row.originalName, { name: row.originalName, desc: row.desc })
+
+// 拖曳排序
+const dragOverIndex = ref(-1)
+const draggedRowIndex = ref(-1)
+
+function onRowDragStart(idx: number) {
+  draggedRowIndex.value = idx
+  dragOverIndex.value = idx
 }
 
-/* 儲存鎖定 */
-const canSave = computed(() => rows.length && rows.every(r => r.topic.trim() && !r.topicError))
+function onRowDragOver(idx: number) {
+  if (draggedRowIndex.value === -1 || idx === draggedRowIndex.value) return
 
-function saveAll() {
-  if (!canSave.value) return
-  // 可在此呼叫 syncToServer()
-  const payload = rows.map(r => ({ id: r.id, topic: r.topic.trim(), desc: r.desc, color: r.color, keywords: parseKeywords(r.keywords), members: r.members }))
-  console.log('SAVE', payload)
-  saved.value = true
+  dragOverIndex.value = idx
 }
-function unlock() { saved.value = false }
 
-/* Drag reorder */
-const dragFromIndex = ref<number | null>(null)
-const dragOverIndex = ref<number | null>(null)
-function onRowDragStart(i:number){ if(saved.value) return; dragFromIndex.value = i }
-function onRowDragOver(i:number){ if(saved.value) return; dragOverIndex.value = i }
-function onRowDrop(i:number){
-  if(saved.value) return
-  if(dragFromIndex.value!==null && dragFromIndex.value!==i){
-    const row = rows.splice(dragFromIndex.value,1)[0]
-    rows.splice(i,0,row)
-    // 重建 topics 順序
-    topics.value = rows.map(r => {
-      const t = topics.value.find(tt=>tt.name===r.originalName)!
-      return { ...t }
-    })
-  }
-  dragFromIndex.value = null
-  dragOverIndex.value = null
+function onRowDrop() {
+  if (draggedRowIndex.value === -1 || dragOverIndex.value === -1) return
+  if (draggedRowIndex.value === dragOverIndex.value) return
+
+  // 執行拖曳排序
+  const draggedRow = rows[draggedRowIndex.value]
+  rows.splice(draggedRowIndex.value, 1)
+  rows.splice(dragOverIndex.value, 0, draggedRow)
+
+  // 重置狀態
+  draggedRowIndex.value = -1
+  dragOverIndex.value = -1
 }
-function onRowDragEnd(){ dragFromIndex.value=null; dragOverIndex.value=null }
+
+function onRowDragEnd() {
+  // 重置所有拖曳狀態
+  draggedRowIndex.value = -1
+  dragOverIndex.value = -1
+}
 </script>
 
 <style scoped>
-.keyword-setting-page {
-  background: #f8fafc;
-  min-height: 100vh;
-}
-
-.page-header {
+.bg-gradient {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  padding: 40px 0;
-  border-bottom: 1px solid #e2e8f0;
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+.table-hover tbody tr:hover {
+  background-color: #f8fafc;
 }
 
-.header-content {
-  text-align: center;
+.position-relative {
+  position: relative;
 }
 
-.page-title {
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: #1a202c;
-  margin: 0 0 12px;
+.dropdown-menu.show {
+  display: block !important;
 }
 
-.page-subtitle {
-  font-size: 1.1rem;
-  color: #4a5568;
-  margin: 0;
+.btn-close-white {
+  filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(210deg);
 }
 
-.main-content {
-  padding: 40px 0;
+.text-muted {
+  color: #6b7280 !important;
 }
 
-.section-card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
+.text-success {
+  color: #16a34a !important;
 }
 
-.card-header {
-  padding: 32px;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 24px;
+.text-danger {
+  color: #dc2626 !important;
 }
 
-.header-left {
-  flex: 1;
-}
-
-.card-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1a202c;
-  margin: 0 0 8px;
-}
-
-.card-subtitle {
-  font-size: 0.95rem;
-  color: #6b7280;
-  margin: 0;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.status-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.85rem;
+.badge {
+  padding: 0.5em 0.75em;
+  border-radius: 1.25rem;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
-.status-badge.locked {
-  background: #fef3c7;
-  color: #92400e;
-}
-
 .btn {
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  border: 2px solid transparent;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
   cursor: pointer;
-  font-size: 0.9rem;
+  transition: all 0.2s ease;
 }
 
 .btn-primary {
   background-color: #1976d2;
   color: white;
-  border-color: #1976d2;
 }
 
 .btn-primary:hover:not(:disabled) {
   background-color: #1565c0;
-  border-color: #1565c0;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
 }
 
-.btn-outline-primary {
-  background: transparent;
-  color: #1976d2;
-  border-color: #1976d2;
-}
-
-.btn-outline-primary:hover {
-  background: #1976d2;
-  color: white;
-}
-
-.btn-success {
-  background-color: #059669;
-  color: white;
-  border-color: #059669;
-}
-
-.btn-success:hover:not(:disabled) {
-  background-color: #047857;
-  border-color: #047857;
-}
-
-.btn-secondary {
-  background-color: #6b7280;
-  color: white;
-  border-color: #6b7280;
-}
-
-.btn:disabled {
+.btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
-.table-container {
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.data-table th {
-  background: #f8fafc;
-  padding: 16px 12px;
-  text-align: left;
-  font-weight: 600;
-  color: #374151;
-  border-bottom: 2px solid #e5e7eb;
-  white-space: nowrap;
-}
-
-.data-table td {
-  padding: 16px 12px;
-  border-bottom: 1px solid #e5e7eb;
-  vertical-align: top;
-}
-
-.data-table tbody tr {
-  transition: all 0.2s ease;
-}
-
-.data-table tbody tr:hover:not(.empty-row) {
-  background: #f8fafc;
-}
-
-.row-dragging {
-  background: #e3f2fd !important;
-  opacity: 0.8;
-}
-
-.drag-cell {
-  text-align: center;
-}
-
-.drag-handle {
-  cursor: grab;
-  color: #9ca3af;
-  font-size: 18px;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.drag-handle:hover:not(.disabled) {
-  background: #f3f4f6;
+.btn-outline-primary {
+  background-color: transparent;
   color: #1976d2;
+  border: 1px solid #1976d2;
 }
 
-.drag-handle.disabled {
-  cursor: not-allowed;
-  opacity: 0.4;
+.btn-outline-primary:hover:not(:disabled) {
+  background-color: #1976d2;
+  color: white;
 }
 
-.input-wrapper {
-  position: relative;
+.btn-outline-danger {
+  color: #dc2626;
+  border: 1px solid #dc2626;
 }
 
-.form-input,
-.form-textarea {
-  width: 100%;
-  padding: 8px 12px;
-  border: 2px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 0.9rem;
+.btn-outline-danger:hover:not(:disabled) {
+  background-color: #dc2626;
+  color: white;
+}
+
+.form-control,
+.form-control-sm {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
   transition: all 0.2s ease;
 }
 
-.form-input:focus,
-.form-textarea:focus {
+.form-control:focus,
+.form-control-sm:focus {
   outline: none;
   border-color: #1976d2;
   box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
 }
 
-.form-input.error,
-.form-textarea.error {
-  border-color: #dc2626;
-}
-
-.form-input:disabled,
-.form-textarea:disabled {
-  background: #f9fafb;
+.form-control:disabled,
+.form-control-sm:disabled {
+  background-color: #f8fafc;
   color: #6b7280;
   cursor: not-allowed;
 }
 
-.form-textarea {
-  resize: vertical;
-  min-height: 60px;
+.is-invalid {
+  border-color: #dc2626;
 }
 
-.color-picker-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.invalid-feedback {
+  color: #dc2626;
+  font-size: 0.8rem;
+  margin-top: 4px;
 }
 
-.color-input {
+.form-control-color {
   width: 40px;
   height: 40px;
-  border: 2px solid #e5e7eb;
-  border-radius: 6px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.color-input:hover {
+.form-control-color:hover {
   border-color: #1976d2;
+  transform: scale(1.05);
 }
 
-.color-preview {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid #e5e7eb;
+.form-control-color:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rounded-circle {
+  border-radius: 50% !important;
 }
 
 .keywords-wrapper {
@@ -702,83 +631,83 @@ function onRowDragEnd(){ dragFromIndex.value=null; dragOverIndex.value=null }
 
 .keywords-hint {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #9ca3af;
   margin-top: 4px;
 }
 
 .suggestions-list {
   position: absolute;
+  z-index: 1000;
   top: 100%;
   left: 0;
   right: 0;
   background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 6px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  max-height: 150px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
   overflow-y: auto;
 }
 
 .suggestion-item {
-  padding: 8px 12px;
+  padding: 10px 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.85rem;
+  transition: background-color 0.2s ease;
+  font-size: 0.9rem;
 }
 
 .suggestion-item:hover {
-  background: #f8fafc;
-  color: #1976d2;
+  background-color: #f8fafc;
 }
 
 .members-wrapper {
-  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .member-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 8px;
 }
 
 .member-tag {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: #1976d2;
-  color: white;
-  padding: 4px 8px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1976d2;
+  padding: 4px 10px;
   border-radius: 16px;
   font-size: 0.8rem;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .remove-btn {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.8);
+  color: #dc2626;
   cursor: pointer;
-  padding: 0;
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
   font-size: 14px;
-  line-height: 1;
+  font-weight: bold;
+  padding: 0 2px;
+  transition: color 0.2s ease;
 }
 
 .remove-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  color: #b91c1c;
 }
 
 .remove-btn:disabled {
-  opacity: 0.5;
+  color: #9ca3af;
   cursor: not-allowed;
+}
+
+.empty-state {
+  color: #9ca3af;
+  font-size: 0.85rem;
+  font-style: italic;
 }
 
 .member-input {
@@ -792,228 +721,67 @@ function onRowDragEnd(){ dragFromIndex.value=null; dragOverIndex.value=null }
 
 .add-btn {
   padding: 8px 16px;
-  background: #f3f4f6;
-  border: 2px solid #e5e7eb;
+  background: #1976d2;
+  color: white;
+  border: none;
   border-radius: 6px;
-  font-size: 0.85rem;
   cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
   transition: all 0.2s ease;
 }
 
 .add-btn:hover {
-  background: #1976d2;
-  border-color: #1976d2;
-  color: white;
-}
-
-.action-cell {
-  text-align: center;
+  background: #1565c0;
+  transform: translateY(-1px);
 }
 
 .action-btn {
   padding: 8px;
-  background: #f3f4f6;
-  border: 2px solid #e5e7eb;
+  background: none;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+}
+
+.delete-btn {
+  color: #dc2626;
 }
 
 .delete-btn:hover:not(:disabled) {
-  background: #fecaca;
-  border-color: #f87171;
-  color: #dc2626;
+  background: #fee2e2;
+  border-color: #fecaca;
 }
 
 .delete-btn:disabled {
-  opacity: 0.4;
+  color: #d1d5db;
   cursor: not-allowed;
 }
 
-.empty-row td {
-  border: none;
+.row-dragging {
+  opacity: 0.5;
 }
 
-.empty-state-cell {
-  text-align: center;
-  padding: 60px 20px;
+.row-locked {
+  background-color: #f8fafc !important;
 }
 
-.empty-illustration {
-  margin-bottom: 20px;
+.row-locked input,
+.row-locked textarea {
+  background-color: #f1f5f9;
 }
 
-.empty-illustration .material-symbols-outlined {
-  font-size: 48px;
-  color: #d1d5db;
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-size: 18px;
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
 }
 
-.empty-text h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #374151;
-  margin: 0 0 8px;
-}
-
-.empty-text p {
-  color: #6b7280;
-  margin: 0;
-}
-
-.empty-state {
-  color: #9ca3af;
-  font-size: 0.85rem;
-  font-style: italic;
-}
-
-.error-message {
-  color: #dc2626;
-  font-size: 0.8rem;
-  margin-top: 4px;
-}
-
-/* Modal 樣式 */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1400;
-}
-
-.modal-card {
-  background: white;
-  width: 100%;
-  max-width: 500px;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-}
-
-.modal-header {
-  padding: 24px 24px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1a202c;
-  margin: 0;
-}
-
-.close-btn {
-  padding: 8px;
-  background: none;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  color: #6b7280;
-  transition: all 0.2s ease;
-}
-
-.close-btn:hover {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.modal-body {
-  padding: 24px;
-}
-
-.modal-footer {
-  padding: 0 24px 24px;
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-label {
-  display: block;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 6px;
-}
-
-.required {
-  color: #dc2626;
-}
-
-.form-control {
-  width: 100%;
-  padding: 10px 12px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: #1976d2;
-  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
-}
-
-.form-control.error {
-  border-color: #dc2626;
-}
-
-/* 響應式設計 */
-@media (max-width: 768px) {
-  .container {
-    padding: 0 16px;
-  }
-
-  .page-title {
-    font-size: 1.8rem;
-  }
-
-  .card-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 20px;
-    padding: 24px 20px;
-  }
-
-  .header-actions {
-    justify-content: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .table-container {
-    margin: -1px;
-  }
-
-  .data-table th,
-  .data-table td {
-    padding: 12px 8px;
-  }
-
-  .member-input {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 640px) {
-  .data-table {
-    font-size: 0.8rem;
-  }
-
-  .btn {
-    padding: 8px 16px;
-    font-size: 0.85rem;
-  }
+.me-1 {
+  margin-right: 4px;
 }
 </style>
