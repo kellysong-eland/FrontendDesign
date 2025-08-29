@@ -3,8 +3,11 @@
     <aside v-if="open" class="custom-sidebar">
       <nav class="sidebar-menu">
         <router-link to="/" class="sidebar-item" :class="{active: currentPage==='Home'}" @click="handleClose">首頁</router-link>
+        <router-link to="/home" class="sidebar-item" :class="{active: currentPage==='HomeVersion1'}" @click="handleClose">首頁設定</router-link>
+        <router-link to="/home2" class="sidebar-item" :class="{active: currentPage==='HomeVersion2'}" @click="handleClose">首頁設定2</router-link>
         <router-link to="/articles" class="sidebar-item" :class="{active: currentPage==='Articles'}" @click="handleClose">文章列表</router-link>
         <router-link to="/keywords" class="sidebar-item" :class="{active: currentPage==='Keywords'}" @click="handleClose">關鍵字設定</router-link>
+        <router-link to="/test" class="sidebar-item" :class="{active: currentPage==='Test'}" @click="handleClose">測試</router-link>
       </nav>
     </aside>
   </transition>
@@ -13,7 +16,7 @@
 <script setup lang="ts">
 const props = defineProps({
   open: Boolean,
-  currentPage: String
+  currentPage: String,
 })
 const emit = defineEmits(['close'])
 
