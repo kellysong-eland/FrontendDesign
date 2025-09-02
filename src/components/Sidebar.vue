@@ -26,6 +26,14 @@
           <span class="material-symbols-outlined">settings</span>
           關鍵字設定
         </button>
+        <button
+          class="nav-item"
+          :class="{ active: currentPage === 'test' }"
+          @click="$emit('navigate', 'test')"
+        >
+          <span class="material-symbols-outlined">settings</span>
+          測試 Modal
+        </button>
       </nav>
     </div>
   </div>

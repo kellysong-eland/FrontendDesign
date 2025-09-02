@@ -28,6 +28,8 @@ const navigateTo = (page: string) => {
     case 'keywords':
       router.push('/keywords')
       break
+    case 'test':
+      router.push('/test')
   }
   closeSidebar()
 }
