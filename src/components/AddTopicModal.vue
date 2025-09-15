@@ -97,8 +97,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
+import { ref, withDefaults } from 'vue'
 
 interface TopicData {
   settingMode: 'ai' | 'manual';
@@ -108,49 +108,54 @@ interface TopicData {
   member: string;
 }
 
-export default defineComponent({
-  name: 'AddTopicModal',
-  props: {
-    members: {
-      type: Array as () => string[],
-      default: () => ['admin', 'editor', 'viewer']
-    }
-  },
-  emits: ['close', 'save'],
-  data() {
-    return {
-      settingMode: 'ai' as const,
-      description: '',
-      topicName: '',
-      topicColor: '#449CD1',
-      selectedMember: 'admin',
-      showMemberDropdown: false
-    }
-  },
-  methods: {
-    closeModal(): void {
-      this.$emit('close')
-    },
-    toggleMemberDropdown(): void {
-      this.showMemberDropdown = !this.showMemberDropdown
-    },
-    selectMember(member: string): void {
-      this.selectedMember = member
-      this.showMemberDropdown = false
-    },
-    saveTopic(): void {
-      const topicData: TopicData = {
-        settingMode: this.settingMode,
-        description: this.description,
-        name: this.topicName,
-        color: this.topicColor,
-        member: this.selectedMember
-      }
-      this.$emit('save', topicData)
-      this.closeModal()
-    }
-  }
+interface Props {
+  members?: string[];
+}
+
+// Props 定義
+const props = withDefaults(defineProps<Props>(), {
+  members: () => ['admin', 'editor', 'viewer']
 })
+
+// Emits 定義
+const emit = defineEmits<{
+  close: [];
+  save: [data: TopicData];
+}>()
+
+// Reactive data
+const settingMode = ref<'ai' | 'manual'>('ai')
+const description = ref('')
+const topicName = ref('')
+const topicColor = ref('#449CD1')
+const selectedMember = ref('admin')
+const showMemberDropdown = ref(false)
+
+// Methods
+const closeModal = (): void => {
+  emit('close')
+}
+
+const toggleMemberDropdown = (): void => {
+  showMemberDropdown.value = !showMemberDropdown.value
+}
+
+const selectMember = (member: string): void => {
+  selectedMember.value = member
+  showMemberDropdown.value = false
+}
+
+const saveTopic = (): void => {
+  const topicData: TopicData = {
+    settingMode: settingMode.value,
+    description: description.value,
+    name: topicName.value,
+    color: topicColor.value,
+    member: selectedMember.value
+  }
+  emit('save', topicData)
+  closeModal()
+}
 </script>
 
 <style scoped>
